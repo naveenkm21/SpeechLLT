@@ -4,10 +4,10 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -35,6 +35,7 @@ async function startServer() {
   app.get("/api/translation-status", (_req: Request, res: Response) => {
     const apiKey = getConfiguredApiKey();
     res.json({
+      serviceAvailable: true,
       liveApiConfigured: Boolean(apiKey),
     });
   });

@@ -37,6 +37,8 @@ export function TranslationLabSection() {
   const [sourceLang, setSourceLang] = useState("English");
   const [targetLang, setTargetLang] = useState("French");
   const [liveApiConfigured, setLiveApiConfigured] = useState(false);
+  const [translationServiceAvailable, setTranslationServiceAvailable] =
+    useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPipelineTrace, setShowPipelineTrace] = useState(true);
   const [result, setResult] = useState<LabResult>(() => {
@@ -54,14 +56,23 @@ export function TranslationLabSection() {
   useEffect(() => {
     let mounted = true;
     fetch("/api/translation-status")
-      .then((res) => (res.ok ? res.json() : { liveApiConfigured: false }))
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Translation service is unavailable.");
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (mounted && typeof data?.liveApiConfigured === "boolean") {
-          setLiveApiConfigured(data.liveApiConfigured);
+        if (mounted) {
+          setTranslationServiceAvailable(data?.serviceAvailable === true);
+          setLiveApiConfigured(data?.liveApiConfigured === true);
         }
       })
       .catch(() => {
-        if (mounted) setLiveApiConfigured(false);
+        if (mounted) {
+          setTranslationServiceAvailable(false);
+          setLiveApiConfigured(false);
+        }
       });
     return () => {
       mounted = false;
@@ -144,13 +155,17 @@ export function TranslationLabSection() {
 
     // Unconfigured custom text: be 100% transparent, never fake a hardcoded translation
     setResult({
-      mode: "unconfigured-custom",
+      mode: translationServiceAvailable ? "unconfigured-custom" : "error",
       translatedText:
-        "Custom arbitrary-text translation requires a live translation API key on the server.",
+        translationServiceAvailable
+          ? "Custom arbitrary-text translation requires a live translation API key on the server."
+          : "The live translation server is unavailable.",
       sourceTokens: tokens,
       targetTokens: [],
       detectedLanguage: detectScriptHeuristic(trimmed),
-      note: "Simulated Educational Mode: Client-side tokenization and language heuristics ran locally on your custom sentence. Select one of the predefined parallel corpus presets above to inspect complete target translations.",
+      note: translationServiceAvailable
+        ? "Simulated Educational Mode: Client-side tokenization and language heuristics ran locally on your custom sentence. Select one of the predefined parallel corpus presets above to inspect complete target translations."
+        : "The frontend could not reach /api/translation-status. Deploy the Node server, then configure OPENROUTER_API_KEY in the server environment.",
     });
   };
 
