@@ -1,0 +1,6 @@
+{
+  "name": "Google Translate: Inside the Machine",
+  "description": "An interactive university-level Computer Science exploration of Neural Machine Translation, Transformer architecture, and Google Translate.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_OPENROUTER_API"]
+}
